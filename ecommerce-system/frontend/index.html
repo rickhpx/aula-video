@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minha Loja</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <main>
+    <div id="content">
+      <h2>Produtos</h2>
+      <form id="filters" class="card filters">
+        <input name="q" type="search" placeholder="Buscar produto...">
+        <select name="category"><option value="">Todas as categorias</option></select>
+        <input name="minPrice" type="number" step="0.01" min="0" placeholder="Preço mín.">
+        <input name="maxPrice" type="number" step="0.01" min="0" placeholder="Preço máx.">
+        <button type="reset" class="btn btn-outline">Limpar</button>
+      </form>
+      <div id="products" class="grid"></div>
+    </div>
+  </main>
+
+  <script type="module" src="/pages/loja/loja.js"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard · Minha Loja</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <main>
+    <div id="content">
+      <h2>Dashboard</h2>
+
+      <div id="stats" class="stats"></div>
+
+      <div class="dash-grid">
+        <section class="card">
+          <h3>Pedidos por status</h3>
+          <div id="by-status" class="bars"></div>
+        </section>
+
+        <section class="card">
+          <h3>Mais vendidos</h3>
+          <div id="top-products" class="bars"></div>
+        </section>
+
+        <section class="card">
+          <h3>Estoque baixo</h3>
+          <div id="low-stock"></div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="./dashboard.js"></script>
+</body>
+</html>

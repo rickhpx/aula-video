@@ -2,7 +2,7 @@
 ### Clique em "Send Request" acima de cada requisição.
 ### Ordem sugerida: cadastrar → login → usar o resto (o token é preenchido sozinho).
 
-@baseUrl = http://localhost:3000
+@baseUrl = http://localhost:3000/api
 @token = {{login.response.body.token}}
 
 
@@ -33,22 +33,22 @@ GET {{baseUrl}}/auth/me
 Authorization: Bearer {{token}}
 
 
-############################## PRODUTOS ##############################
+############################## ESTOQUE (produtos) ##############################
 
 ### Listar produtos (não precisa de login)
-GET {{baseUrl}}/products
+GET {{baseUrl}}/estoque
 
 ### Buscar produtos (filtros opcionais: q, category, minPrice, maxPrice)
-GET {{baseUrl}}/products?q=cami&category=Roupas&minPrice=10&maxPrice=100
+GET {{baseUrl}}/estoque?q=cami&category=Roupas&minPrice=10&maxPrice=100
 
 ### Listar categorias
-GET {{baseUrl}}/products/categories
+GET {{baseUrl}}/estoque/categorias
 
 ### Ver um produto
-GET {{baseUrl}}/products/1
+GET {{baseUrl}}/estoque/1
 
 ### Criar produto (só admin)
-POST {{baseUrl}}/products
+POST {{baseUrl}}/estoque
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -61,7 +61,7 @@ Content-Type: application/json
 }
 
 ### Editar produto (só admin) — envie só os campos que quer mudar
-PUT {{baseUrl}}/products/1
+PUT {{baseUrl}}/estoque/1
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -69,19 +69,28 @@ Content-Type: application/json
   "price": 49.9
 }
 
+### Repor estoque (só admin) — soma ao estoque atual
+POST {{baseUrl}}/estoque/1/repor
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "amount": 10
+}
+
 ### Excluir produto (só admin)
-DELETE {{baseUrl}}/products/4
+DELETE {{baseUrl}}/estoque/4
 Authorization: Bearer {{token}}
 
 
 ############################## CARRINHO ##############################
 
 ### Ver meu carrinho
-GET {{baseUrl}}/cart
+GET {{baseUrl}}/carrinho
 Authorization: Bearer {{token}}
 
-### Adicionar item ao carrinho
-POST {{baseUrl}}/cart
+### Adicionar item ao carrinho (soma ao que já tem)
+POST {{baseUrl}}/carrinho
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -90,31 +99,67 @@ Content-Type: application/json
   "quantity": 2
 }
 
+### Mudar a quantidade de um item
+PUT {{baseUrl}}/carrinho/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "quantity": 3
+}
+
 ### Remover item do carrinho
-DELETE {{baseUrl}}/cart/1
+DELETE {{baseUrl}}/carrinho/1
 Authorization: Bearer {{token}}
 
 
 ############################## PEDIDOS ##############################
 
 ### Finalizar compra (transforma o carrinho em pedido)
-POST {{baseUrl}}/orders
+POST {{baseUrl}}/pedidos
 Authorization: Bearer {{token}}
 
 ### Listar meus pedidos (admin vê todos)
-GET {{baseUrl}}/orders
+GET {{baseUrl}}/pedidos
 Authorization: Bearer {{token}}
 
 ### Ver um pedido
-GET {{baseUrl}}/orders/1
+GET {{baseUrl}}/pedidos/1
 Authorization: Bearer {{token}}
 
 ### Mudar status do pedido (só admin): criado, pago, enviado, entregue, cancelado
-### Cancelar devolve os itens ao estoque
-PATCH {{baseUrl}}/orders/1/status
+### Cancelar devolve os itens ao estoque e estorna o pagamento
+PATCH {{baseUrl}}/pedidos/1/status
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "status": "pago"
+  "status": "enviado"
 }
+
+
+############################## PAGAMENTOS (simulado) ##############################
+
+### Formas de pagamento aceitas
+GET {{baseUrl}}/pagamentos/formas
+
+### Pagar um pedido (só o dono do pedido) — method: pix, cartao ou boleto
+POST {{baseUrl}}/pagamentos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "orderId": 1,
+  "method": "pix"
+}
+
+### Listar pagamentos (admin vê todos)
+GET {{baseUrl}}/pagamentos
+Authorization: Bearer {{token}}
+
+
+############################## DASHBOARD ##############################
+
+### Números da loja (só admin)
+GET {{baseUrl}}/dashboard
+Authorization: Bearer {{token}}
