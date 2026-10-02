@@ -192,3 +192,34 @@ dialog form { position: relative; max-width: none; }
   text-transform: uppercase;
   color: #888;
 }
+
+/* Status do pedido */
+.order-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.status { padding: 4px 10px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; }
+.status-criado { background: #fff4d6; color: #8a6100; }
+.status-pago { background: #dcecff; color: #1d4f91; }
+.status-enviado { background: #ece3ff; color: #5a32a3; }
+.status-entregue { background: #dcf5e3; color: #1d6b38; }
+.status-cancelado { background: #fde2e2; color: #a12a2a; }
+.status-select { padding: 6px; border: 1px solid #ccc; border-radius: 6px; font: inherit; }
+
+/* Abas de pedidos do admin */
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.tab { padding: 8px 14px; border: 1px solid #ccc; border-radius: 999px; background: none; cursor: pointer; font: inherit; }
+.tab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.tab .badge:empty { display: none; }
+
+/* Detalhes do produto */
+.product[data-open] { cursor: pointer; transition: transform 0.15s; }
+.product[data-open]:hover { transform: translateY(-2px); }
+#product-dialog { width: min(440px, calc(100vw - 32px)); }
+.product-detail { position: relative; display: flex; flex-direction: column; gap: 8px; }
+.product-detail .thumb { font-size: 4rem; text-align: center; }
+.product-detail .category { font-size: 0.75rem; text-transform: uppercase; color: #888; }
+.product-detail .description { color: var(--muted); white-space: pre-line; }
+.buy-row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+.buy-row label { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.buy-row input { padding: 8px; border: 1px solid #ccc; border-radius: 8px; font: inherit; }
+.admin-box { border-top: 1px solid #eee; padding-top: 10px; display: flex; flex-direction: column; gap: 10px; }
+.admin-box summary { cursor: pointer; font-weight: 600; }
+.form textarea { padding: 10px; border: 1px solid #ccc; border-radius: 8px; font: inherit; resize: vertical; }

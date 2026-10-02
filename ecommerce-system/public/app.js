@@ -62,7 +62,7 @@ async function loadProducts() {
   const products = await api(`/products?${params}`);
   $('#products').innerHTML = products.length
     ? products.map((p) => `
-        <div class="card product">
+        <div class="card product" data-open="${p.id}" title="Ver detalhes">
           <div class="thumb">${icons[(p.id - 1) % icons.length]}</div>
           <span class="category">${escape(p.category)}</span>
           <h3>${escape(p.name)}</h3>
@@ -113,9 +113,98 @@ $('#products').addEventListener('click', async (e) => {
       toast('Produto excluído');
       loadProducts();
     }
+    // Clicou no card (fora dos botões): abre os detalhes
+    const card = e.target.closest('[data-open]');
+    if (card && !e.target.closest('button')) openProduct(Number(card.dataset.open));
   } catch (err) {
     toast(err.message);
   }
+});
+
+// ---------- Detalhes do produto ----------
+let currentProduct = null;
+
+async function openProduct(id) {
+  const p = await api(`/products/${id}`);
+  currentProduct = p;
+  $('#pd-thumb').textContent = icons[(p.id - 1) % icons.length];
+  $('#pd-category').textContent = p.category;
+  $('#pd-name').textContent = p.name;
+  $('#pd-description').textContent = p.description || 'Sem descrição.';
+  $('#pd-price').textContent = money(p.price);
+  $('#pd-stock').textContent = p.stock > 0 ? `${p.stock} em estoque` : 'Esgotado';
+
+  // Cliente: quantidade limitada ao estoque
+  const qty = $('#pd-buy input[name="quantity"]');
+  qty.value = 1;
+  qty.max = p.stock;
+  $('#pd-buy').classList.toggle('hidden', p.stock === 0);
+
+  // Admin: preenche o formulário de edição
+  const edit = $('#pd-edit');
+  for (const field of ['name', 'price', 'category', 'description', 'stock']) {
+    edit.elements[field].value = p[field];
+  }
+  $('#pd-restock input[name="amount"]').value = 1;
+
+  if (!$('#product-dialog').open) $('#product-dialog').showModal();
+}
+
+async function saveProduct(changes, message) {
+  try {
+    await api(`/products/${currentProduct.id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ ...currentProduct, ...changes }),
+    });
+    toast(message);
+    await openProduct(currentProduct.id);
+    loadProducts();
+    loadCategories();
+  } catch (err) {
+    toast(err.message);
+  }
+}
+
+$('#product-close').addEventListener('click', () => $('#product-dialog').close());
+
+$('#pd-buy').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!token) {
+    $('#product-dialog').close();
+    return openAuth();
+  }
+  const quantity = Number(new FormData(e.target).get('quantity'));
+  try {
+    await api('/cart', {
+      method: 'POST',
+      body: JSON.stringify({ productId: currentProduct.id, quantity }),
+    });
+    toast(`${quantity}× ${currentProduct.name} no carrinho!`);
+    updateCartCount();
+    $('#product-dialog').close();
+  } catch (err) {
+    toast(err.message);
+  }
+});
+
+$('#pd-restock').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const amount = Number(new FormData(e.target).get('amount'));
+  // Busca o estoque atual antes de somar (alguém pode ter comprado nesse meio-tempo)
+  const { stock } = await api(`/products/${currentProduct.id}`);
+  saveProduct({ stock: stock + amount }, `+${amount} no estoque`);
+});
+
+$('#pd-edit').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const form = new FormData(e.target);
+  saveProduct({
+    name: form.get('name'),
+    price: Number(form.get('price')),
+    category: form.get('category'),
+    description: form.get('description'),
+    stock: Number(form.get('stock')),
+  }, 'Produto atualizado!');
 });
 
 // ---------- Carrinho ----------
@@ -164,22 +253,99 @@ $('#checkout-btn').addEventListener('click', async () => {
 });
 
 // ---------- Pedidos ----------
+const STATUS_LABELS = {
+  criado: 'Aguardando pagamento',
+  pago: 'Pago',
+  enviado: 'Enviado',
+  entregue: 'Entregue',
+  cancelado: 'Cancelado',
+};
+
+// Admin vê um seletor para mudar o status; cliente vê só a etiqueta
+function statusView(o) {
+  if (user?.role !== 'admin' || o.status === 'cancelado') {
+    return `<span class="status status-${o.status}">${STATUS_LABELS[o.status] || escape(o.status)}</span>`;
+  }
+  return `
+    <select class="status-select" data-order="${o.id}">
+      ${Object.entries(STATUS_LABELS).map(([value, label]) =>
+        `<option value="${value}" ${value === o.status ? 'selected' : ''}>${label}</option>`).join('')}
+    </select>`;
+}
+
+// Abas de pedidos: cada pedido aparece só na aba do seu status.
+// O cliente não tem aba de cancelados, então eles somem da tela dele.
+const ORDER_TABS = {
+  admin: {
+    novos: { label: 'Pedidos', statuses: ['criado'], empty: 'Nenhum pedido novo.' },
+    entrega: { label: 'A entregar', statuses: ['pago', 'enviado'], empty: 'Nenhum pedido aguardando entrega.' },
+    concluidos: { label: 'Concluídos', statuses: ['entregue'], empty: 'Nenhum pedido entregue ainda.' },
+    cancelados: { label: 'Cancelados', statuses: ['cancelado'], empty: 'Nenhum pedido cancelado.' },
+  },
+  customer: {
+    andamento: { label: 'Em andamento', statuses: ['criado', 'pago', 'enviado'], empty: 'Nenhum pedido em andamento.' },
+    concluidos: { label: 'Concluídos', statuses: ['entregue'], empty: 'Nenhum pedido concluído ainda.' },
+  },
+};
+let orderTab = null;
+
+$('#order-tabs').addEventListener('click', (e) => {
+  const btn = e.target.closest('.tab');
+  if (!btn) return;
+  orderTab = btn.dataset.tab;
+  loadOrders();
+});
+
 async function loadOrders() {
   const orders = await api('/orders');
-  $('#orders-list').innerHTML = orders.length
-    ? orders.slice().reverse().map((o) => `
+  const isAdmin = user?.role === 'admin';
+  const tabs = ORDER_TABS[isAdmin ? 'admin' : 'customer'];
+  if (!tabs[orderTab]) orderTab = Object.keys(tabs)[0];
+
+  $('#orders-title').textContent = isAdmin ? 'Gerenciar pedidos' : 'Meus pedidos';
+  $('#order-tabs').innerHTML = Object.entries(tabs).map(([key, tab]) => {
+    const count = orders.filter((o) => tab.statuses.includes(o.status)).length;
+    return `<button data-tab="${key}" class="tab ${key === orderTab ? 'active' : ''}">
+      ${tab.label} <span class="badge">${count}</span></button>`;
+  }).join('');
+
+  const visible = orders.filter((o) => tabs[orderTab].statuses.includes(o.status));
+  const empty = tabs[orderTab].empty;
+
+  $('#orders-list').innerHTML = visible.length
+    ? visible.slice().reverse().map((o) => `
         <div class="card order">
           <div class="order-header">
-            <strong>Pedido #${o.id}</strong>
+            <strong>Pedido #${o.id}${isAdmin && o.userName ? ` · ${escape(o.userName)}` : ''}</strong>
             <span>${new Date(o.createdAt).toLocaleString('pt-BR')}</span>
           </div>
           <ul>
             ${o.items.map((i) => `<li>${i.quantity}× ${escape(i.name)} — ${money(i.subtotal)}</li>`).join('')}
           </ul>
-          <p><strong>Total: ${money(o.total)}</strong> · ${escape(o.status)}</p>
+          <div class="order-footer">
+            <strong>Total: ${money(o.total)}</strong>
+            ${statusView(o)}
+          </div>
         </div>`).join('')
-    : '<p class="empty">Você ainda não fez nenhum pedido.</p>';
+    : `<p class="empty">${empty}</p>`;
 }
+
+$('#orders-list').addEventListener('change', async (e) => {
+  const id = e.target.dataset.order;
+  if (!id) return;
+  const status = e.target.value;
+  if (status === 'cancelado' && !confirm('Cancelar o pedido? Os itens voltam para o estoque.')) {
+    return loadOrders();
+  }
+  try {
+    await api(`/orders/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+    const moved = { pago: 'A entregar', enviado: 'A entregar', entregue: 'Concluídos', cancelado: 'Cancelados (estoque devolvido)' };
+    toast(moved[status] ? `Pedido #${id} movido para ${moved[status]}` : `Pedido #${id}: ${STATUS_LABELS[status]}`);
+  } catch (err) {
+    toast(err.message);
+  }
+  loadOrders();
+});
 
 // ---------- Admin ----------
 $('#product-form').addEventListener('submit', async (e) => {
@@ -193,6 +359,7 @@ $('#product-form').addEventListener('submit', async (e) => {
         price: Number(form.get('price')),
         stock: Number(form.get('stock')),
         category: form.get('category'),
+        description: form.get('description'),
       }),
     });
     toast('Produto cadastrado!');

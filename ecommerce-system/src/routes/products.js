@@ -46,13 +46,16 @@ router.get('/:id', (req, res) => {
 });
 
 router.post('/', requireAdmin, (req, res) => {
-  const { name, price, stock = 0, category } = req.body;
+  const { name, price, stock = 0, category, description = '' } = req.body;
   if (!name || typeof price !== 'number' || price <= 0) {
     return res.status(400).json({ error: 'Informe name e price (número positivo)' });
   }
+  if (!Number.isInteger(stock) || stock < 0) {
+    return res.status(400).json({ error: 'stock deve ser um inteiro maior ou igual a 0' });
+  }
   const { lastInsertRowid } = db
-    .prepare('INSERT INTO products (name, price, stock, category) VALUES (?, ?, ?, ?)')
-    .run(name, price, stock, category?.trim() || 'Geral');
+    .prepare('INSERT INTO products (name, price, stock, category, description) VALUES (?, ?, ?, ?, ?)')
+    .run(name, price, stock, category?.trim() || 'Geral', description.trim());
   res.status(201).json(findProduct(lastInsertRowid));
 });
 
@@ -64,9 +67,17 @@ router.put('/:id', requireAdmin, (req, res) => {
     price = product.price,
     stock = product.stock,
     category = product.category,
+    description = product.description,
   } = req.body;
-  db.prepare('UPDATE products SET name = ?, price = ?, stock = ?, category = ? WHERE id = ?')
-    .run(name, price, stock, category, product.id);
+  if (!name || typeof price !== 'number' || price <= 0) {
+    return res.status(400).json({ error: 'name e price (número positivo) são obrigatórios' });
+  }
+  if (!Number.isInteger(stock) || stock < 0) {
+    return res.status(400).json({ error: 'stock deve ser um inteiro maior ou igual a 0' });
+  }
+  db.prepare(
+    'UPDATE products SET name = ?, price = ?, stock = ?, category = ?, description = ? WHERE id = ?'
+  ).run(name, price, stock, category?.trim() || 'Geral', description.trim(), product.id);
   res.json(findProduct(product.id));
 });
 

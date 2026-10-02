@@ -56,7 +56,8 @@ Content-Type: application/json
   "name": "Boné",
   "price": 39.9,
   "stock": 15,
-  "category": "Acessórios"
+  "category": "Acessórios",
+  "description": "Boné ajustável de algodão"
 }
 
 ### Editar produto (só admin) — envie só os campos que quer mudar
@@ -107,3 +108,13 @@ Authorization: Bearer {{token}}
 ### Ver um pedido
 GET {{baseUrl}}/orders/1
 Authorization: Bearer {{token}}
+
+### Mudar status do pedido (só admin): criado, pago, enviado, entregue, cancelado
+### Cancelar devolve os itens ao estoque
+PATCH {{baseUrl}}/orders/1/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "pago"
+}

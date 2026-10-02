@@ -29,7 +29,8 @@ db.exec(`
     name TEXT NOT NULL,
     price REAL NOT NULL,
     stock INTEGER NOT NULL DEFAULT 0,
-    category TEXT NOT NULL DEFAULT 'Geral'
+    category TEXT NOT NULL DEFAULT 'Geral',
+    description TEXT NOT NULL DEFAULT ''
   );
 
   CREATE TABLE IF NOT EXISTS cart_items (
@@ -68,13 +69,20 @@ if (!productColumns.some((c) => c.name === 'category')) {
   db.exec("ALTER TABLE products ADD COLUMN category TEXT NOT NULL DEFAULT 'Geral'");
 }
 
+// Migração: produtos antigos não tinham descrição
+if (!productColumns.some((c) => c.name === 'description')) {
+  db.exec("ALTER TABLE products ADD COLUMN description TEXT NOT NULL DEFAULT ''");
+}
+
 // Produtos de exemplo, inseridos só na primeira vez
 const { count } = db.prepare('SELECT COUNT(*) AS count FROM products').get();
 if (count === 0) {
-  const insert = db.prepare('INSERT INTO products (name, price, stock, category) VALUES (?, ?, ?, ?)');
-  insert.run('Camiseta', 59.9, 20, 'Roupas');
-  insert.run('Calça Jeans', 149.9, 10, 'Roupas');
-  insert.run('Tênis', 299.9, 5, 'Calçados');
+  const insert = db.prepare(
+    'INSERT INTO products (name, price, stock, category, description) VALUES (?, ?, ?, ?, ?)'
+  );
+  insert.run('Camiseta', 59.9, 20, 'Roupas', 'Camiseta 100% algodão, confortável para o dia a dia.');
+  insert.run('Calça Jeans', 149.9, 10, 'Roupas', 'Calça jeans de corte reto, com elastano.');
+  insert.run('Tênis', 299.9, 5, 'Calçados', 'Tênis leve com amortecimento, ideal para caminhadas.');
 }
 
 // Executa fn dentro de uma transação (tudo ou nada)
