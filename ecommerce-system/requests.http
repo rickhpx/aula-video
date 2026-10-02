@@ -38,6 +38,12 @@ Authorization: Bearer {{token}}
 ### Listar produtos (não precisa de login)
 GET {{baseUrl}}/products
 
+### Buscar produtos (filtros opcionais: q, category, minPrice, maxPrice)
+GET {{baseUrl}}/products?q=cami&category=Roupas&minPrice=10&maxPrice=100
+
+### Listar categorias
+GET {{baseUrl}}/products/categories
+
 ### Ver um produto
 GET {{baseUrl}}/products/1
 
@@ -49,7 +55,8 @@ Content-Type: application/json
 {
   "name": "Boné",
   "price": 39.9,
-  "stock": 15
+  "stock": 15,
+  "category": "Acessórios"
 }
 
 ### Editar produto (só admin) — envie só os campos que quer mudar

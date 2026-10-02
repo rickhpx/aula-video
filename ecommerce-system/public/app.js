@@ -38,7 +38,10 @@ function showView(name) {
   document.querySelectorAll('.nav-btn').forEach((b) =>
     b.classList.toggle('active', b.dataset.view === name)
   );
-  if (name === 'shop') loadProducts();
+  if (name === 'shop') {
+    loadCategories();
+    loadProducts();
+  }
   if (name === 'cart') loadCart();
   if (name === 'orders') loadOrders();
 }
@@ -51,11 +54,17 @@ document.querySelectorAll('.nav-btn').forEach((btn) =>
 const icons = ['👕', '👖', '👟', '🧢', '🎒', '⌚', '🕶️', '👜'];
 
 async function loadProducts() {
-  const products = await api('/products');
+  // Monta a URL com os filtros preenchidos, ex.: /products?q=cami&category=Roupas
+  const params = new URLSearchParams();
+  for (const [key, value] of new FormData($('#filters'))) {
+    if (value) params.set(key, value);
+  }
+  const products = await api(`/products?${params}`);
   $('#products').innerHTML = products.length
     ? products.map((p) => `
         <div class="card product">
           <div class="thumb">${icons[(p.id - 1) % icons.length]}</div>
+          <span class="category">${escape(p.category)}</span>
           <h3>${escape(p.name)}</h3>
           <span class="price">${money(p.price)}</span>
           <span class="stock">${p.stock > 0 ? `${p.stock} em estoque` : 'Esgotado'}</span>
@@ -66,8 +75,28 @@ async function loadProducts() {
             ? `<button class="btn btn-danger" data-delete="${p.id}">Excluir</button>`
             : ''}
         </div>`).join('')
-    : '<p class="empty">Nenhum produto cadastrado.</p>';
+    : '<p class="empty">Nenhum produto encontrado.</p>';
 }
+
+// Preenche o select de categorias (e as sugestões do formulário de admin)
+async function loadCategories() {
+  const categories = await api('/products/categories');
+  const select = $('#filters select[name="category"]');
+  const current = select.value;
+  select.innerHTML = '<option value="">Todas as categorias</option>' +
+    categories.map((c) => `<option value="${escape(c)}">${escape(c)}</option>`).join('');
+  select.value = current;
+  $('#category-list').innerHTML = categories.map((c) => `<option value="${escape(c)}">`).join('');
+}
+
+// Filtra enquanto digita (espera 300 ms depois da última tecla)
+let filterTimer;
+$('#filters').addEventListener('input', () => {
+  clearTimeout(filterTimer);
+  filterTimer = setTimeout(loadProducts, 300);
+});
+$('#filters').addEventListener('reset', () => setTimeout(loadProducts));
+$('#filters').addEventListener('submit', (e) => e.preventDefault());
 
 $('#products').addEventListener('click', async (e) => {
   const addId = e.target.dataset.add;
@@ -163,6 +192,7 @@ $('#product-form').addEventListener('submit', async (e) => {
         name: form.get('name'),
         price: Number(form.get('price')),
         stock: Number(form.get('stock')),
+        category: form.get('category'),
       }),
     });
     toast('Produto cadastrado!');

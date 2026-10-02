@@ -28,7 +28,8 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     price REAL NOT NULL,
-    stock INTEGER NOT NULL DEFAULT 0
+    stock INTEGER NOT NULL DEFAULT 0,
+    category TEXT NOT NULL DEFAULT 'Geral'
   );
 
   CREATE TABLE IF NOT EXISTS cart_items (
@@ -61,13 +62,19 @@ if (!orderColumns.some((c) => c.name === 'user_id')) {
   db.exec('ALTER TABLE orders ADD COLUMN user_id INTEGER REFERENCES users(id)');
 }
 
+// Migração: produtos antigos não tinham categoria
+const productColumns = db.prepare('PRAGMA table_info(products)').all();
+if (!productColumns.some((c) => c.name === 'category')) {
+  db.exec("ALTER TABLE products ADD COLUMN category TEXT NOT NULL DEFAULT 'Geral'");
+}
+
 // Produtos de exemplo, inseridos só na primeira vez
 const { count } = db.prepare('SELECT COUNT(*) AS count FROM products').get();
 if (count === 0) {
-  const insert = db.prepare('INSERT INTO products (name, price, stock) VALUES (?, ?, ?)');
-  insert.run('Camiseta', 59.9, 20);
-  insert.run('Calça Jeans', 149.9, 10);
-  insert.run('Tênis', 299.9, 5);
+  const insert = db.prepare('INSERT INTO products (name, price, stock, category) VALUES (?, ?, ?, ?)');
+  insert.run('Camiseta', 59.9, 20, 'Roupas');
+  insert.run('Calça Jeans', 149.9, 10, 'Roupas');
+  insert.run('Tênis', 299.9, 5, 'Calçados');
 }
 
 // Executa fn dentro de uma transação (tudo ou nada)

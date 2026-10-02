@@ -171,3 +171,24 @@ dialog form { position: relative; max-width: none; }
   max-width: 90vw;
 }
 .toast.show { transform: translateX(-50%) translateY(0); }
+
+/* Filtros da vitrine */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.filters input,
+.filters select {
+  flex: 1 1 140px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font: inherit;
+}
+.product .category {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #888;
+}
