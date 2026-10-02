@@ -1,0 +1,102 @@
+### Requisições de teste — use com a extensão "REST Client" do VS Code
+### Clique em "Send Request" acima de cada requisição.
+### Ordem sugerida: cadastrar → login → usar o resto (o token é preenchido sozinho).
+
+@baseUrl = http://localhost:3000
+@token = {{login.response.body.token}}
+
+
+############################## AUTENTICAÇÃO ##############################
+
+### Cadastrar usuário (o PRIMEIRO cadastrado vira admin)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Seu Nome",
+  "email": "voce@email.com",
+  "password": "123456"
+}
+
+### Login (guarda o token para as próximas requisições)
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "voce@email.com",
+  "password": "123456"
+}
+
+### Meus dados
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+
+
+############################## PRODUTOS ##############################
+
+### Listar produtos (não precisa de login)
+GET {{baseUrl}}/products
+
+### Ver um produto
+GET {{baseUrl}}/products/1
+
+### Criar produto (só admin)
+POST {{baseUrl}}/products
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Boné",
+  "price": 39.9,
+  "stock": 15
+}
+
+### Editar produto (só admin) — envie só os campos que quer mudar
+PUT {{baseUrl}}/products/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "price": 49.9
+}
+
+### Excluir produto (só admin)
+DELETE {{baseUrl}}/products/4
+Authorization: Bearer {{token}}
+
+
+############################## CARRINHO ##############################
+
+### Ver meu carrinho
+GET {{baseUrl}}/cart
+Authorization: Bearer {{token}}
+
+### Adicionar item ao carrinho
+POST {{baseUrl}}/cart
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 2
+}
+
+### Remover item do carrinho
+DELETE {{baseUrl}}/cart/1
+Authorization: Bearer {{token}}
+
+
+############################## PEDIDOS ##############################
+
+### Finalizar compra (transforma o carrinho em pedido)
+POST {{baseUrl}}/orders
+Authorization: Bearer {{token}}
+
+### Listar meus pedidos (admin vê todos)
+GET {{baseUrl}}/orders
+Authorization: Bearer {{token}}
+
+### Ver um pedido
+GET {{baseUrl}}/orders/1
+Authorization: Bearer {{token}}

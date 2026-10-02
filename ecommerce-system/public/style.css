@@ -1,0 +1,173 @@
+:root {
+  --primary: #6c3ce1;
+  --primary-dark: #5229c0;
+  --bg: #f5f5fa;
+  --card: #ffffff;
+  --text: #222;
+  --muted: #777;
+  --danger: #d93838;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.hidden { display: none !important; }
+
+/* Barra superior */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 24px;
+  background: var(--card);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.logo { font-size: 1.3rem; color: var(--primary); }
+nav { display: flex; gap: 6px; flex-wrap: wrap; }
+.nav-btn {
+  border: none;
+  background: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+.nav-btn:hover { background: var(--bg); }
+.nav-btn.active { background: var(--primary); color: #fff; }
+.badge {
+  background: var(--danger);
+  color: #fff;
+  border-radius: 10px;
+  padding: 1px 7px;
+  font-size: 0.75rem;
+}
+.user-area { display: flex; align-items: center; gap: 10px; }
+#user-name { color: var(--muted); font-size: 0.9rem; }
+
+/* Botões */
+.btn {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+.btn:hover { background: var(--primary-dark); }
+.btn:disabled { background: #bbb; cursor: not-allowed; }
+.btn-outline { background: none; color: var(--primary); border: 1px solid var(--primary); }
+.btn-outline:hover { background: var(--bg); }
+.btn-danger { background: none; color: var(--danger); border: 1px solid var(--danger); padding: 6px 12px; }
+
+/* Conteúdo */
+main { max-width: 1100px; margin: 0 auto; padding: 28px 16px; }
+h2 { margin-bottom: 20px; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 18px;
+}
+.card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+.product { display: flex; flex-direction: column; gap: 8px; }
+.product .thumb {
+  height: 120px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #ece6ff, #d9ccff);
+  display: grid;
+  place-items: center;
+  font-size: 3rem;
+}
+.product h3 { font-size: 1.05rem; }
+.price { font-size: 1.25rem; font-weight: bold; color: var(--primary); }
+.stock { font-size: 0.85rem; color: var(--muted); }
+.product .btn { margin-top: auto; }
+
+/* Carrinho */
+.cart-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.cart-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  font-size: 1.15rem;
+}
+.empty { color: var(--muted); }
+
+/* Pedidos */
+.order { margin-bottom: 14px; }
+.order-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.order ul { list-style: none; color: var(--muted); }
+
+/* Formulários */
+.form { display: flex; flex-direction: column; gap: 14px; max-width: 400px; }
+.form label { display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem; }
+.form input {
+  padding: 9px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+.form input:focus { outline: 2px solid var(--primary); border-color: transparent; }
+
+/* Janela de login */
+dialog {
+  border: none;
+  border-radius: 14px;
+  padding: 28px;
+  width: min(380px, 92vw);
+  margin: auto;
+}
+dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
+dialog form { position: relative; max-width: none; }
+.close {
+  position: absolute;
+  top: -12px;
+  right: -8px;
+  border: none;
+  background: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: var(--muted);
+}
+.error { color: var(--danger); font-size: 0.9rem; min-height: 1em; }
+.switch { font-size: 0.9rem; text-align: center; }
+.switch a { color: var(--primary); }
+
+/* Aviso flutuante */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: #222;
+  color: #fff;
+  padding: 12px 22px;
+  border-radius: 10px;
+  transition: transform 0.3s;
+  max-width: 90vw;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
